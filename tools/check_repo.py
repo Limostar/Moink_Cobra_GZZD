@@ -36,9 +36,8 @@ REQUIRED = [
     "assets/fonts/NotoSansSC-Regular.ttf",
     "assets/icon.png",
     ".github/workflows/build-apk.yml",
-    # numpy 编译补丁：缺了会在云端卡在 “no template named 'unordered_map'”
+    # numpy 版本覆盖：缺了会在云端卡在 “no template named 'unordered_map'”
     "p4a-recipes/numpy/__init__.py",
-    "p4a-recipes/numpy/ensure-unordered-map.patch",
 ]
 
 FORBIDDEN_DIRS = ["bin", ".buildozer", "build", "dist", "__pycache__", "bdapp/__pycache__"]

@@ -13,8 +13,8 @@ package.domain = com.med
 # 源码目录
 source.dir = .
 # npz 必须显式加进来，否则模型与演示数据不会被打进 APK（默认清单里没有 npz）
-source.include_exts = py,kv,ttf,otf,png,jpg,json,npz,patch
-source.exclude_dirs = build, dist, bin, .git, .github, .buildozer, __pycache__, tools
+source.include_exts = py,kv,ttf,otf,png,jpg,json,npz
+source.exclude_dirs = build, dist, bin, .git, .github, .buildozer, __pycache__, tools, p4a-recipes
 
 version = 1.0.0
 

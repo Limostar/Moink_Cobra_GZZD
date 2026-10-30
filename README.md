@@ -48,9 +48,8 @@ APK地址/
 │   ├── check_assets.py         资源自检（不依赖 Kivy）
 │   └── check_repo.py           上传前自检（防呆，只用标准库）
 ├── p4a-recipes/
-│   └── numpy/                  覆盖 p4a 的 numpy recipe（版本 v2.3.0 在 NDK 上编不过）
-│       ├── __init__.py
-│       └── ensure-unordered-map.patch
+│   └── numpy/                  覆盖 p4a 的 numpy recipe（v2.3.0 在 NDK 上编不过，抬到 v2.3.3）
+│       └── __init__.py
 ├── buildozer.spec
 ├── requirements.txt
 ├── constraints.txt
@@ -180,28 +179,33 @@ GitHub Actions 的第 1.5 步会执行同一个脚本，**不通过就直接失�
 | 桌面图标还是绿色机器人 | `icon.filename` 未配置或 `assets/icon.png` 缺失 | 跑 `python tools/make_icon.py` |
 | 编译卡在 numpy：`no template named 'unordered_map'` | p4a 自带的 numpy v2.3.0 少了一个头文件 | 保留 `p4a-recipes/numpy/`（见 7.6） |
 
-### 7.6 关于 numpy 编译失败（这次实际踩到的坑）
+### 7.6 关于 numpy 编译失败（两次踩坑的最终结论）
 
-首次云端构建在 `buildozer -v android debug` 的第 8 步失败，日志关键行：
+**第一次**：构建停在第 8 步，日志关键行：
 
 ```
 ../numpy/_core/src/multiarray/unique.cpp:123:6: error: no template named 'unordered_map'
     in namespace 'std'; did you mean 'unordered_set'?
 ```
 
-原因不是我们的代码，而是 **p4a 内置的 numpy v2.3.0 有缺陷**：`unique.cpp` 用了
-`std::unordered_map`，却只 `#include <unordered_set>`。桌面上的 libstdc++ 会间接把
-`<unordered_map>` 带进来，所以本地编得过；Android NDK 的 libc++ 不会，于是直接报错。
-numpy **v2.3.3** 已经补上这个头文件。
+p4a 内置的 numpy v2.3.0 里，`unique.cpp` 用了 `std::unordered_map`，却只
+`#include <unordered_set>`。桌面 libstdc++ 会间接带入 `<unordered_map>`，Android NDK 的
+libc++ 不会 → 编译失败。numpy **v2.3.3** 已补上这个头文件。
 
-仓库里因此多了 `p4a-recipes/numpy/`：
+**第二次**：只加版本覆盖的同时还附了一个“补丁兜底”，结果补丁本身没打上：
 
-- `__init__.py`：继承 p4a 的 `NumpyRecipe`，把版本抬到 `v2.3.3`；
-- `ensure-unordered-map.patch`：兜底补一个 `#include <unordered_map>`
-  （重复 include 有 include guard，无害）；
+```
+running git checkout v2.3.3          ← 版本覆盖是成功的
+Applying patch ensure-unordered-map.patch
+Hunk #1 FAILED at 1                  ← 补丁上下文没匹配（CRLF/LF 差异）
+```
 
-`buildozer.spec` 里通过 `p4a.local_recipes = %(source.dir)s/p4a-recipes` 挂载。
-**这三个位置缺一不可**，`check_repo.py` 会检查它们是否齐全。
+由于 v2.3.3 源码里本来就有 `#include <unordered_map>`，这个补丁既多余又是新的失败点，
+**已删除**。
+
+最终方案只剩一件事：`p4a-recipes/numpy/__init__.py` 里把版本设为 `v2.3.3`，
+再由 `buildozer.spec` 的 `p4a.local_recipes = %(source.dir)s/p4a-recipes` 挂载。
+**这两处缺一不可**，`check_repo.py` 会检查它们是否齐全。
 
 ## 8. 已知限制
 
