@@ -1,0 +1,267 @@
+{
+  "version": "RF-v20261030-183246",
+  "trained_at": "2026-10-30T18:32:46+08:00",
+  "source": "APK 端（numpy 特征，与网页端同数据同划分）",
+  "class_names": {
+    "0": "正常",
+    "1": "内圈故障",
+    "2": "外圈故障",
+    "3": "滚动体故障"
+  },
+  "config": {
+    "bearing": {
+      "name": "6205-2RS JEM SKF",
+      "n_balls": 9,
+      "ball_diameter_mm": 7.94,
+      "pitch_diameter_mm": 39.04,
+      "contact_angle_deg": 0.0
+    },
+    "signal": {
+      "fs": 12000,
+      "window_seconds": 1.0,
+      "overlap": 0.5,
+      "sensor_range_g": 50.0,
+      "envelope_band_hz": [
+        500.0,
+        5500.0
+      ]
+    },
+    "features": {
+      "selected_features": [
+        "rms",
+        "kurtosis",
+        "crest_factor",
+        "high_band_ratio",
+        "fault_frequency_ratio",
+        "harmonic_consistency"
+      ],
+      "high_band_hz": [
+        1000.0,
+        5500.0
+      ],
+      "fault_tolerance": 0.02
+    },
+    "alarm": {
+      "threshold_sigma": 3.0,
+      "confirmations": 3,
+      "release_confirmations": 5
+    },
+    "health": {
+      "healthy_min": 85.0,
+      "attention_min": 65.0,
+      "degraded_min": 40.0
+    },
+    "loads": [
+      {
+        "load_hp": 0.0,
+        "rpm": 1797.0,
+        "file": "97.mat",
+        "note": "验证集"
+      },
+      {
+        "load_hp": 1.0,
+        "rpm": 1772.0,
+        "file": "98.mat",
+        "note": "训练集"
+      },
+      {
+        "load_hp": 2.0,
+        "rpm": 1750.0,
+        "file": "99.mat",
+        "note": "训练集"
+      },
+      {
+        "load_hp": 3.0,
+        "rpm": 1730.0,
+        "file": "100.mat",
+        "note": "独立测试集"
+      }
+    ]
+  },
+  "baselines": {
+    "global": {
+      "I1_RMS": {
+        "median": -2.73924831178185,
+        "threshold": 0.14957801907138127,
+        "std": 0.0459554739787234
+      },
+      "I2_FAULT": {
+        "median": -4.196726111119713,
+        "threshold": 0.5261575529105087,
+        "std": 0.1727029095823236
+      },
+      "I3_KURTOSIS": {
+        "median": 1.0720022591932135,
+        "threshold": 0.08628765819249731,
+        "std": 0.030274153570761103
+      }
+    },
+    "by_load": {
+      "0.0": {
+        "I1_RMS": {
+          "median": -2.6248139503992927,
+          "threshold": 0.05633272833503237,
+          "std": 0.01807839361396362
+        },
+        "I2_FAULT": {
+          "median": -4.07315184183448,
+          "threshold": 0.47620599598314317,
+          "std": 0.15515871329579142
+        },
+        "I3_KURTOSIS": {
+          "median": 1.0239544025714142,
+          "threshold": 0.08012677194239938,
+          "std": 0.029289972114503945
+        }
+      },
+      "1.0": {
+        "I1_RMS": {
+          "median": -2.7325700246930618,
+          "threshold": 0.03980405350858634,
+          "std": 0.013288900085110538
+        },
+        "I2_FAULT": {
+          "median": -4.261349816109308,
+          "threshold": 0.48416424010016146,
+          "std": 0.16722538591565062
+        },
+        "I3_KURTOSIS": {
+          "median": 1.0702222393980052,
+          "threshold": 0.066056236589944,
+          "std": 0.02138999955072845
+        }
+      },
+      "2.0": {
+        "I1_RMS": {
+          "median": -2.7631966664072283,
+          "threshold": 0.03089739481296693,
+          "std": 0.010200335852995622
+        },
+        "I2_FAULT": {
+          "median": -4.236044119556026,
+          "threshold": 0.45074944707897985,
+          "std": 0.14702903295979258
+        },
+        "I3_KURTOSIS": {
+          "median": 1.0741987331343208,
+          "threshold": 0.059126868831203425,
+          "std": 0.020439780031999675
+        }
+      },
+      "3.0": {
+        "I1_RMS": {
+          "median": -2.7382573852976266,
+          "threshold": 0.027950072516694683,
+          "std": 0.00950553891387122
+        },
+        "I2_FAULT": {
+          "median": -4.122517617948246,
+          "threshold": 0.4428088790014063,
+          "std": 0.147802727744326
+        },
+        "I3_KURTOSIS": {
+          "median": 1.0848203499637612,
+          "threshold": 0.05230862669242599,
+          "std": 0.017845884303090646
+        }
+      }
+    }
+  },
+  "health": {
+    "weights": {
+      "rms": 0.3879743448117878,
+      "kurtosis": 0.12705772417347752,
+      "fault_frequency_ratio": 0.3879743448117878,
+      "harmonic_consistency": 0.09699358620294694
+    },
+    "medians": {
+      "rms": 0.06461890206295959,
+      "kurtosis": 2.921222698237739,
+      "fault_frequency_ratio": 0.015044796731010036,
+      "harmonic_consistency": 1.0
+    },
+    "scales": {
+      "rms": 0.005160941900865207,
+      "kurtosis": 0.08661729502793072,
+      "fault_frequency_ratio": 0.0033780127051406222,
+      "harmonic_consistency": 1e-06
+    },
+    "by_load": {
+      "0.0": {
+        "medians": {
+          "rms": 0.0724532356759321,
+          "kurtosis": 2.7841828037176763,
+          "fault_frequency_ratio": 0.01702364801521776,
+          "harmonic_consistency": 1.0
+        },
+        "scales": {
+          "rms": 0.0013115869441759182,
+          "kurtosis": 0.07942281988283187,
+          "fault_frequency_ratio": 0.0032400274751949276,
+          "harmonic_consistency": 1e-06
+        }
+      },
+      "1.0": {
+        "medians": {
+          "rms": 0.06505188968639991,
+          "kurtosis": 2.9160274841631693,
+          "fault_frequency_ratio": 0.014103252758525907,
+          "harmonic_consistency": 1.0
+        },
+        "scales": {
+          "rms": 0.0008578630125646336,
+          "kurtosis": 0.07102021090152555,
+          "fault_frequency_ratio": 0.0023101259818117895,
+          "harmonic_consistency": 1e-06
+        }
+      },
+      "2.0": {
+        "medians": {
+          "rms": 0.06308976872460922,
+          "kurtosis": 2.927646134624269,
+          "fault_frequency_ratio": 0.014464699434858981,
+          "harmonic_consistency": 1.0
+        },
+        "scales": {
+          "rms": 0.0007007314057418564,
+          "kurtosis": 0.05925288483136,
+          "fault_frequency_ratio": 0.002853019499799173,
+          "harmonic_consistency": 1e-06
+        }
+      },
+      "3.0": {
+        "medians": {
+          "rms": 0.06468296622655562,
+          "kurtosis": 2.9589082030226295,
+          "fault_frequency_ratio": 0.01620366839976962,
+          "harmonic_consistency": 1.0
+        },
+        "scales": {
+          "rms": 0.0006102686212732235,
+          "kurtosis": 0.05232553337510555,
+          "fault_frequency_ratio": 0.002670392857863855,
+          "harmonic_consistency": 1e-06
+        }
+      }
+    },
+    "healthy_min": 85.0,
+    "attention_min": 65.0,
+    "degraded_min": 40.0
+  },
+  "metrics": {
+    "accuracy": 1.0,
+    "macro_f1": 1.0,
+    "train_size": 272,
+    "eval_size": 136,
+    "imputer_statistics": [
+      0.06573356776510993,
+      2.945208585579808,
+      3.979856646025497,
+      0.49931338838578565,
+      0.016527758787368816,
+      1.0
+    ],
+    "trees": 300,
+    "web_model_version": null
+  }
+}

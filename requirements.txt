@@ -1,0 +1,10 @@
+# 桌面端运行 / 导出资源所需（打包成 APK 时不需要这些，buildozer.spec 里只列 kivy + numpy）
+kivy==2.3.1
+numpy>=1.24
+pillow>=9.0
+
+# 只在重新导出资源时用到（tools/export_assets.py）
+scipy>=1.10
+pandas>=2.0
+scikit-learn>=1.3
+joblib>=1.3

@@ -1,0 +1,7 @@
+# 依赖约束文件（通过 PIP_CONSTRAINT 环境变量生效）
+
+# p4a(master) 解析依赖时可能选中「Android 专用 wheel」并在安装阶段报
+# "xxx-android_24_arm64_v8a.whl is not a supported wheel on this platform"。
+# charset-normalizer 从 3.5.0 起才发布 Android 专用 wheel，钉到 3.3.2 只有 py3-none-any 通用轮子。
+# 本 App 只依赖 kivy + numpy，正常情况下不会触发；保留此文件是为了在 p4a 版本变化时兜底。
+charset-normalizer==3.3.2

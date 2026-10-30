@@ -1,0 +1,43 @@
+{
+  "app_model_test_accuracy": 1.0,
+  "app_model_macro_f1": 1.0,
+  "rf_probability_max_abs_diff": 1.443631880704288e-10,
+  "demo_accuracy": 1.0,
+  "demo_predicted": [
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    3,
+    3,
+    3,
+    3
+  ],
+  "demo_truth": [
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    3,
+    3,
+    3,
+    3
+  ],
+  "note": "手机端模型使用 numpy 特征在本机重训；与网页端 scipy 特征存在头尾边界差异，故不共用权重。"
+}
