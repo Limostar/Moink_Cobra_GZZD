@@ -60,9 +60,11 @@ jobs:
           path: |
             ~/.buildozer
             ~/.ccache
-          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+          # key 里带 v2：这次换了 numpy recipe（v2.3.0 → v2.3.3），
+          # 必须避开上一次失败留下的半成品编译目录，否则可能复用坏缓存。
+          key: buildozer-${{ runner.os }}-v2-${{ hashFiles('buildozer.spec') }}
           restore-keys: |
-            buildozer-${{ runner.os }}-
+            buildozer-${{ runner.os }}-v2-
 
       - name: 8. 编译 debug 版 APK
         env:
