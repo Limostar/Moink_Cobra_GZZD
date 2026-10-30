@@ -36,6 +36,9 @@ REQUIRED = [
     "assets/fonts/NotoSansSC-Regular.ttf",
     "assets/icon.png",
     ".github/workflows/build-apk.yml",
+    # numpy 编译补丁：缺了会在云端卡在 “no template named 'unordered_map'”
+    "p4a-recipes/numpy/__init__.py",
+    "p4a-recipes/numpy/ensure-unordered-map.patch",
 ]
 
 FORBIDDEN_DIRS = ["bin", ".buildozer", "build", "dist", "__pycache__", "bdapp/__pycache__"]
@@ -87,6 +90,7 @@ def main() -> int:
                 break
         checks["依赖不含 scipy"] = "scipy" not in requirements
         checks["依赖不含 scikit-learn"] = "sklearn" not in requirements and "scikit" not in requirements
+        checks["已挂载本地 recipe"] = "p4a.local_recipes" in spec and "p4a-recipes" in spec
         for label, ok in checks.items():
             if not ok:
                 problems.append("buildozer.spec 检查未通过：%s" % label)

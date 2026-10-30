@@ -47,6 +47,10 @@ APK地址/
 │   ├── make_icon.py            重新生成图标
 │   ├── check_assets.py         资源自检（不依赖 Kivy）
 │   └── check_repo.py           上传前自检（防呆，只用标准库）
+├── p4a-recipes/
+│   └── numpy/                  覆盖 p4a 的 numpy recipe（版本 v2.3.0 在 NDK 上编不过）
+│       ├── __init__.py
+│       └── ensure-unordered-map.patch
 ├── buildozer.spec
 ├── requirements.txt
 ├── constraints.txt
@@ -114,6 +118,7 @@ python main.py                       # 桌面窗口预览（与手机同一套 U
 ├── assets/models/*.npz/json   ✅ 必须（缺了打开就崩）
 ├── assets/data/demo.npz       ✅ 必须（1.7 MB，演示数据）
 ├── assets/fonts/*.ttf         ✅ 必须（否则中文显示成方框）
+├── p4a-recipes/numpy/         ✅ 必须（缺了云端会在编译 numpy 时失败，见 7.6）
 ├── tools/                     ✅ 建议（不影响打包，但方便以后重训/排查）
 └── ...
 ```
@@ -173,6 +178,30 @@ GitHub Actions 的第 1.5 步会执行同一个脚本，**不通过就直接失�
 | APK 能装但一打开就崩 | `assets/models/*.npz` 没进仓库，或 `include_exts` 漏了 `npz` | 跑 `check_repo.py` |
 | 中文全变方框 | 字体文件没提交（`assets/fonts/`） | 补上 17 MB 的 ttf |
 | 桌面图标还是绿色机器人 | `icon.filename` 未配置或 `assets/icon.png` 缺失 | 跑 `python tools/make_icon.py` |
+| 编译卡在 numpy：`no template named 'unordered_map'` | p4a 自带的 numpy v2.3.0 少了一个头文件 | 保留 `p4a-recipes/numpy/`（见 7.6） |
+
+### 7.6 关于 numpy 编译失败（这次实际踩到的坑）
+
+首次云端构建在 `buildozer -v android debug` 的第 8 步失败，日志关键行：
+
+```
+../numpy/_core/src/multiarray/unique.cpp:123:6: error: no template named 'unordered_map'
+    in namespace 'std'; did you mean 'unordered_set'?
+```
+
+原因不是我们的代码，而是 **p4a 内置的 numpy v2.3.0 有缺陷**：`unique.cpp` 用了
+`std::unordered_map`，却只 `#include <unordered_set>`。桌面上的 libstdc++ 会间接把
+`<unordered_map>` 带进来，所以本地编得过；Android NDK 的 libc++ 不会，于是直接报错。
+numpy **v2.3.3** 已经补上这个头文件。
+
+仓库里因此多了 `p4a-recipes/numpy/`：
+
+- `__init__.py`：继承 p4a 的 `NumpyRecipe`，把版本抬到 `v2.3.3`；
+- `ensure-unordered-map.patch`：兜底补一个 `#include <unordered_map>`
+  （重复 include 有 include guard，无害）；
+
+`buildozer.spec` 里通过 `p4a.local_recipes = %(source.dir)s/p4a-recipes` 挂载。
+**这三个位置缺一不可**，`check_repo.py` 会检查它们是否齐全。
 
 ## 8. 已知限制
 

@@ -13,7 +13,7 @@ package.domain = com.med
 # 源码目录
 source.dir = .
 # npz 必须显式加进来，否则模型与演示数据不会被打进 APK（默认清单里没有 npz）
-source.include_exts = py,kv,ttf,otf,png,jpg,json,npz
+source.include_exts = py,kv,ttf,otf,png,jpg,json,npz,patch
 source.exclude_dirs = build, dist, bin, .git, .github, .buildozer, __pycache__, tools
 
 version = 1.0.0
@@ -23,6 +23,11 @@ version = 1.0.0
 requirements = python3,kivy,numpy
 
 p4a.branch = master
+
+# 本地 recipe 覆盖：p4a 自带的 numpy 固定在 v2.3.0，该版本的 unique.cpp 少了
+# #include <unordered_map>，在 NDK 的 libc++ 下会编译失败（详见 p4a-recipes/numpy）。
+# 这里指向仓库自带的 recipe 目录，构建时会优先使用它。
+p4a.local_recipes = %(source.dir)s/p4a-recipes
 
 orientation = portrait
 fullscreen = 0
