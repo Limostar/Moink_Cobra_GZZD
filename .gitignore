@@ -1,0 +1,15 @@
+# 构建产物
+bin/
+.buildozer/
+dist/
+build/
+.apk/
+
+# Python
+__pycache__/
+*.py[cod]
+.kivy/
+
+# 调试脚本产物
+tools/_diag_*.py
+!tools/export_assets.py
