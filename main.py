@@ -25,6 +25,7 @@ from kivy.metrics import dp, sp
 from kivy.properties import NumericProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.uix.scrollview import ScrollView
@@ -394,15 +395,19 @@ class OverviewPage(ScrollPage):
                                   size_hint_y=None, height=dp(20))
         card.add_widget(self.verdict)
         card.add_widget(self.verdict_desc)
+        # 每条概率分两行：上行名称与百分比，下行进度条，避免三者挤在一行互相遮挡
         self.prob_bars = []
         for name in ("正常", "内圈故障", "外圈故障", "滚动体故障"):
-            row = BoxLayout(size_hint_y=None, height=dp(22), spacing=dp(8))
-            row.add_widget(label(name, size=11, color=MUTED, size_hint_x=0.3))
-            bar = Bar(0.0, TEAL, size_hint_y=None, height=dp(8))
-            bar.size_hint_x = 0.5
+            row = BoxLayout(orientation="vertical", size_hint_y=None,
+                            height=dp(38), spacing=dp(3))
+            head = BoxLayout(size_hint_y=None, height=dp(18), spacing=dp(6))
+            head.add_widget(label(name, size=11.5, color=MUTED))
+            value = label("0.0%", size=11.5, color=MUTED, halign="right",
+                          size_hint_x=None, width=dp(54))
+            head.add_widget(value)
+            row.add_widget(head)
+            bar = Bar(0.0, TEAL, size_hint_y=None, height=dp(9))
             row.add_widget(bar)
-            value = label("0%", size=11, color=MUTED, size_hint_x=0.2, halign="right")
-            row.add_widget(value)
             self.prob_bars.append((bar, value))
             card.add_widget(row)
         self.add(card)
@@ -500,20 +505,24 @@ class AcquirePage(ScrollPage):
 
         card = Card().auto()
         card.add_widget(label("演示状态", size=12, color=MUTED, size_hint_y=None, height=dp(18)))
-        grid = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(8))
+        # 四类故障排成两行两列的大按钮，避免一行挤四个把文字压扁
+        grid = GridLayout(cols=2, size_hint_y=None, spacing=dp(8))
+        grid.bind(minimum_height=grid.setter("height"))
         self.class_chips = []
         for index, name in enumerate(("正常", "内圈故障", "外圈故障", "滚动体故障")):
-            chip = Chip(name, active=index == self.state.label_true)
+            chip = Chip(name, active=index == self.state.label_true,
+                        size_hint=(1, None), height=dp(46), font_size=sp(14))
             chip.bind(on_release=lambda _inst, i=index: self._pick_class(i))
             self.class_chips.append(chip)
             grid.add_widget(chip)
         card.add_widget(grid)
 
         card.add_widget(label("负载", size=12, color=MUTED, size_hint_y=None, height=dp(18)))
-        load_row = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(8))
+        load_row = BoxLayout(size_hint_y=None, height=dp(44), spacing=dp(8))
         self.load_chips = []
         for load in (0.0, 1.0, 2.0, 3.0):
-            chip = Chip("%g hp" % load, active=abs(load - self.state.load_hp) < 1e-6)
+            chip = Chip("%g hp" % load, active=abs(load - self.state.load_hp) < 1e-6,
+                        size_hint=(1, None), height=dp(44))
             chip.bind(on_release=lambda _inst, value=load: self._pick_load(value))
             self.load_chips.append((load, chip))
             load_row.add_widget(chip)
