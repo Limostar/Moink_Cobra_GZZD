@@ -29,6 +29,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.uix.scrollview import ScrollView
+from kivy.uix.textinput import TextInput
 from kivy.uix.widget import Widget
 from kivy.utils import get_color_from_hex
 
@@ -186,32 +187,51 @@ class Chip(Button):
 
 
 class Bar(Widget):
-    """水平比例条：value ∈ [0,1]，超限变红。"""
+    """水平比例条：value ∈ [0,1]，按比例填充。"""
+
+    value = NumericProperty(0.0)
 
     def __init__(self, value: float = 0.0, color: str = TEAL, **kwargs):
         kwargs.setdefault("size_hint_y", None)
         kwargs.setdefault("height", dp(8))
         super().__init__(**kwargs)
-        self.value = max(0.0, min(1.0, float(value)))
         self._color = color
-        with self.canvas:
+        with self.canvas.before:
             Color(*col("#E4EDF1"))
             self._bg = RoundedRectangle(radius=[dp(4)], pos=self.pos, size=self.size)
             self._fill_color = Color(*col(color))
-            self._fill = RoundedRectangle(radius=[dp(4)], pos=self.pos, size=(0, self.height))
-        self.bind(pos=self._sync, size=self._sync)
+            self._fill = RoundedRectangle(radius=[dp(4)], pos=self.pos, size=(0, 0))
+        self.bind(pos=self._sync, size=self._sync, value=lambda *_: self._sync())
+        self.value = max(0.0, min(1.0, float(value)))
+        self._sync()
 
     def _sync(self, *_args):
         self._bg.pos = self.pos
         self._bg.size = self.size
+        ratio = max(0.0, min(1.0, float(self.value)))
+        width = self.width * ratio
+        height = self.height
+        # 圆角不能超过条高或填充宽度的一半，否则圆角网格会退化
+        self._fill.radius = [max(0.0, min(dp(4), height / 2.0, width / 2.0))]
+        if width < 0.5:
+            # 概率接近 0 时整段隐藏，避免极窄网格在手机 GPU 上画出杂点或错位色块
+            self._fill_color.a = 0.0
+            self._fill.pos = self.pos
+            self._fill.size = (0.0, 0.0)
+            return
+        self._fill_color.a = 1.0
         self._fill.pos = self.pos
-        self._fill.size = (self.width * self.value, self.height)
+        self._fill.size = (width, height)
 
     def set_value(self, value: float, color: str | None = None) -> None:
-        self.value = max(0.0, min(1.0, float(value)))
         if color is not None:
             self._color = color
             self._fill_color.rgba = col(color)
+        self.value = max(0.0, min(1.0, float(value)))
+        self._sync()
+
+    def refresh(self) -> None:
+        """布局完成后可主动再对齐一次填充宽度。"""
         self._sync()
 
 
@@ -321,6 +341,10 @@ class State:
             float(self.bundle.config["signal"]["overlap"]),
         )
         return True
+
+    def set_rpm(self, rpm: float) -> None:
+        """手动指定转速：只影响特征频率与指标，不改变信号与真实标签。"""
+        self.rpm = float(max(300.0, min(6000.0, float(rpm))))
 
     def analyze(self) -> dict:
         started = time.perf_counter()
@@ -462,6 +486,8 @@ class OverviewPage(ScrollPage):
             prob = float(analysis["probabilities"][i])
             bar.set_value(prob, CLASS_COLORS.get(i, TEAL))
             value.text = "%.1f%%" % (prob * 100)
+        # 布局可能比数据晚一帧（切页、卡片高度变化），下一帧再对齐一次
+        Clock.schedule_once(lambda _dt: self._resync_bars(), 0)
 
         health = analysis["health"]
         self.health_tile[1].text = fmt(health["health_index"], 1)
@@ -496,6 +522,10 @@ class OverviewPage(ScrollPage):
             )
         )
 
+    def _resync_bars(self) -> None:
+        for bar, _value in self.prob_bars:
+            bar.refresh()
+
 
 class AcquirePage(ScrollPage):
     def __init__(self, state: State, on_done, **kwargs):
@@ -528,6 +558,33 @@ class AcquirePage(ScrollPage):
             load_row.add_widget(chip)
         card.add_widget(load_row)
         self.add(card)
+
+        rpm_card = Card().auto()
+        rpm_card.add_widget(label("自定义转速（r/min）", size=12, color=MUTED,
+                                   size_hint_y=None, height=dp(18)))
+        rpm_row = BoxLayout(size_hint_y=None, height=dp(44), spacing=dp(8))
+        self.rpm_input = TextInput(
+            text="%.6g" % self.state.rpm, multiline=False, input_type="number",
+            input_filter="float", halign="center", font_name=FONT_NAME,
+            font_size=sp(15), padding=(dp(8), dp(10)),
+            background_normal="", background_active="", background_color=col(BG),
+            foreground_color=col(TEXT), cursor_color=col(TEAL),
+            hint_text="如 1772", hint_text_color=col(MUTED),
+        )
+        self.rpm_input.bind(on_text_validate=lambda *_: self._apply_rpm())
+        rpm_row.add_widget(self.rpm_input)
+        apply_button = Button(
+            text="应用", font_name=FONT_NAME, font_size=sp(14),
+            background_normal="", background_down="", background_color=col(TEAL),
+            color=col("#FFFFFF"), size_hint_x=None, width=dp(76),
+        )
+        apply_button.bind(on_release=lambda *_: self._apply_rpm())
+        rpm_row.add_widget(apply_button)
+        rpm_card.add_widget(rpm_row)
+        self.rpm_note = label("", size=11, color=MUTED, auto_height=True)
+        rpm_card.add_widget(self.rpm_note)
+        self.add(rpm_card)
+        self._update_rpm_note()
 
         run_card = Card().auto()
         row = BoxLayout(size_hint_y=None, height=dp(46), spacing=dp(10))
@@ -567,6 +624,35 @@ class AcquirePage(ScrollPage):
             chip.set_active(abs(value - load) < 1e-6)
         self.state.load_sample(self.state.label_true, load)
         self._recompute()
+
+    def _apply_rpm(self) -> None:
+        text = (self.rpm_input.text or "").strip()
+        try:
+            value = float(text)
+        except ValueError:
+            self.rpm_note.color = col(DANGER)
+            self.rpm_note.text = "请输入数字，例如 1772"
+            return
+        if not 300.0 <= value <= 6000.0:
+            self.rpm_note.color = col(DANGER)
+            self.rpm_note.text = "转速需在 300～6000 r/min 之间"
+            return
+        self.state.set_rpm(value)
+        self.state.analyze()
+        self._update_rpm_note()
+        self.on_done()
+
+    def _update_rpm_note(self) -> None:
+        self.rpm_note.color = col(MUTED)
+        analysis = self.state.analysis
+        if not analysis or not analysis.get("rows"):
+            self.rpm_note.text = "当前 %.0f r/min（默认值随演示状态与负载变化）" % self.state.rpm
+            return
+        freqs = analysis["rows"][-1]["fault_frequencies"]
+        self.rpm_note.text = (
+            "当前 %.0f r/min ｜ BPFO %.1f ｜ BPFI %.1f ｜ BSF %.1f Hz"
+            % (self.state.rpm, freqs["BPFO"], freqs["BPFI"], freqs["BSF"])
+        )
 
     def _recompute(self) -> None:
         self.state.analyze()
@@ -613,6 +699,8 @@ class AcquirePage(ScrollPage):
             chip.set_active(i == self.state.label_true)
         for value, chip in self.load_chips:
             chip.set_active(abs(value - self.state.load_hp) < 1e-6)
+        self.rpm_input.text = "%.6g" % self.state.rpm
+        self._update_rpm_note()
 
 
 class AnalyzePage(ScrollPage):
